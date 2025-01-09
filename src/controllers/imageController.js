@@ -9,8 +9,27 @@ const getAllImages = async (request, response) => {
         createdAt: 'desc',
       },
     })
-    return response.json({ images })
+
+    const imagesWithUsage = await Promise.all(
+      images.map(async (image) => {
+        const isUsedInThumbnail = await prisma.post.findFirst({
+          where: { thumbnailImage: image.imageUrl },
+        })
+
+        const isUsedInContent = await prisma.post.findFirst({
+          where: { content: { contains: image.imageUrl } },
+        })
+
+        return {
+          ...image,
+          isUsed: Boolean(isUsedInThumbnail || isUsedInContent),
+        }
+      })
+    )
+
+    return response.json({ images: imagesWithUsage })
   } catch (error) {
+    console.error('Error fetching images:', error)
     return response.status(500).json({ error: 'Failed to fetch images' })
   }
 }

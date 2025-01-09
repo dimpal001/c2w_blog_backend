@@ -6,6 +6,9 @@ const getAllPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
       include: { categories: true },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
     response.json(posts)
   } catch (error) {
@@ -21,7 +24,13 @@ const getPostById = async (request, response) => {
       include: { categories: true },
     })
     if (!post) return response.status(404).json({ message: 'Post not found' })
-    response.json(post)
+
+    const categoriesIds = post.categories.map((category) => category.id)
+
+    response.json({
+      ...post,
+      categories: categoriesIds,
+    })
   } catch (error) {
     response.status(500).json({ message: 'Failed to fetch post' })
   }
@@ -149,9 +158,16 @@ const createPost = async (request, response) => {
 }
 
 const updatePost = async (request, response) => {
-  const { id } = request.params
-  const { title, userId, status, thumbnailImage, content, tags, categories } =
-    request.body
+  const {
+    id,
+    title,
+    userId,
+    status,
+    thumbnailImage,
+    content,
+    tags,
+    categories,
+  } = request.body
   try {
     const slug = slugify(title, { lower: true, strict: true })
     const post = await prisma.post.update({
@@ -169,13 +185,13 @@ const updatePost = async (request, response) => {
     })
     response.json(post)
   } catch (error) {
+    console.log(error)
     response.status(500).json({ message: 'Failed to update post' })
   }
 }
 
 const activePost = async (request, response) => {
   const { id } = request.params
-  console.log(id)
   try {
     if (!id) {
       return response.json(400).json({ message: 'Post ID should be provided' })

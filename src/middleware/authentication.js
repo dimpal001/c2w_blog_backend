@@ -4,12 +4,12 @@ dotenv.config()
 
 const authenticateJWT = (request, response, next) => {
   const token = request.headers['authorization']?.split(' ')[1]
-  console.log(request.headers)
 
   if (!token) return response.status(403).json({ message: 'Access denied' })
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    console.log(token)
 
     const currentTime = Math.floor(Date.now() / 1000)
     if (decoded.exp < currentTime) {
