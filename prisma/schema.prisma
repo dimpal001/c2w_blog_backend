@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  PENDING
+  INACTIVE
+  ACTIVE
+}
+
+model Category {
+  id        String   @unique @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Post      Post?    @relation(fields: [postId], references: [id])
+  postId    String?
+}
+
+model Post {
+  id             String     @unique @default(cuid()) @map("blog_post_unique_id")
+  title          String     @map("blog_post_title")
+  userId         String     @map("blog_post_user_id")
+  slug           String     @unique @map("blog_post_unique_slug")
+  status         Status     @map("blog_post_status")
+  thumbnailImage String
+  content        String     @map("blog_post_full_content") @db.Text
+  likes          Int        @default(0)
+  tags           Json       @map("blog_post_seo_tags")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  categories     Category[]
+}
+
+model Images {
+  id        String   @unique @default(cuid())
+  imageUrl  String
+  altText   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
