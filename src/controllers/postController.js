@@ -5,7 +5,15 @@ const prisma = new PrismaClient()
 const getAllPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { categories: true },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        slug: true,
+        thumbnailImage: true,
+        createdAt: true,
+        content: true,
+      },
       orderBy: {
         createdAt: 'desc',
       },
@@ -44,7 +52,7 @@ const getPostBySlug = async (request, response) => {
       include: { categories: true },
     })
     if (!post) return response.status(404).json({ message: 'Post not found' })
-    response.json(post)
+    response.status(200).json(post)
   } catch (error) {
     response.status(500).json({ message: 'Failed to fetch post' })
   }

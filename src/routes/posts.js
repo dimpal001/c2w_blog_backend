@@ -16,7 +16,7 @@ const router = express.Router()
 
 router.get('/', authenticateJWT, getAllPosts)
 router.get('/:id', authenticateJWT, getPostById)
-router.get('/slug', getPostBySlug)
+router.get('/post/:slug', getPostBySlug)
 router.get('/query', getPostBySearchQuery)
 router.post('/', authenticateJWT, createPost)
 router.put('/', authenticateJWT, updatePost)
