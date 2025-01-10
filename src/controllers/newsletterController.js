@@ -21,13 +21,23 @@ const getAllNewsletters = async (request, response) => {
 
 const createNewsletter = async (request, response) => {
   const { email } = request.body
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!email) {
+    return response.status(400).json({ message: 'Email cannot be empty!' })
+  }
+  if (!emailRegex.test(email)) {
+    return response.status(400).json({ message: 'Invalid email format!' })
+  }
+
   try {
     const isExist = await prisma.newsletter.findUnique({
       where: { email },
     })
 
     if (isExist) {
-      return response.status(400).json({ message: 'Email is already exist!' })
+      return response.status(400).json({ message: 'Email already exists!' })
     }
 
     const newsletter = await prisma.newsletter.create({
@@ -35,9 +45,12 @@ const createNewsletter = async (request, response) => {
         email,
       },
     })
-    response.status(201).json(newsletter)
+    response.status(201).json({
+      message: 'Email successfully added to the newsletter!',
+      data: newsletter,
+    })
   } catch (error) {
-    console.log(error)
+    console.error(error)
     response.status(500).json({ message: 'Failed to create newsletter' })
   }
 }

@@ -48,7 +48,7 @@ const getPostBySlug = async (request, response) => {
   const { slug } = request.params
   try {
     const post = await prisma.post.findUnique({
-      where: { slug },
+      where: { slug, status: 'ACTIVE' },
       include: { categories: true },
     })
     if (!post) return response.status(404).json({ message: 'Post not found' })
