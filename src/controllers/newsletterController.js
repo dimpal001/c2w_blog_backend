@@ -5,9 +5,9 @@ const getAllNewsletters = async (request, response) => {
   try {
     const newsletters = await prisma.newsletter.findMany({
       select: {
-        id,
-        email,
-        createdAt,
+        id: true,
+        email: true,
+        createdAt: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -15,6 +15,7 @@ const getAllNewsletters = async (request, response) => {
     })
     response.json(newsletters)
   } catch (error) {
+    console.log(error)
     response.status(500).json({ message: 'Failed to fetch newsletters' })
   }
 }
