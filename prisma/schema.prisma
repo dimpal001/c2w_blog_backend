@@ -14,28 +14,37 @@ enum Status {
 }
 
 model Category {
-  id        String   @unique @default(cuid())
+  id        String   @id @unique @default(cuid())
   name      String
   slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Post      Post?    @relation(fields: [postId], references: [id])
-  postId    String?
+  posts     Post[]   @relation("CategoryPosts")
+}
+
+model Likes {
+  id     String @unique @default(cuid()) @map("blog_like_id")
+  userId String
+  postId String @map("blog_post_id")
+  post   Post   @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
 }
 
 model Post {
-  id             String     @unique @default(cuid()) @map("blog_post_unique_id")
-  title          String     @map("blog_post_title")
-  userId         String     @map("blog_post_user_id")
-  slug           String     @unique @map("blog_post_unique_slug")
-  status         Status     @map("blog_post_status")
-  thumbnailImage String
-  content        String     @map("blog_post_full_content") @db.Text
-  likes          Int        @default(0)
-  tags           Json       @map("blog_post_seo_tags")
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  categories     Category[]
+  id                    String     @id @unique @default(cuid()) @map("blog_post_unique_id")
+  title                 String     @map("blog_post_title")
+  userId                String     @map("blog_post_user_id")
+  slug                  String     @unique @map("blog_post_unique_slug")
+  status                Status     @map("blog_post_status")
+  thumbnailImage        String
+  thumbnailImageAltText String?
+  content               String     @map("blog_post_full_content") @db.Text
+  tags                  Json       @map("blog_post_seo_tags")
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  categories            Category[] @relation("CategoryPosts")
+  likes                 Likes[]
 }
 
 model Images {

@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client')
+const jwt = require('jsonwebtoken')
 const { default: slugify } = require('slugify')
 const prisma = new PrismaClient()
 
@@ -13,14 +14,62 @@ const getAllPosts = async (request, response) => {
         thumbnailImage: true,
         createdAt: true,
         content: true,
+        _count: {
+          select: {
+            likes: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     })
-    response.json(posts)
+
+    const formattedPosts = posts.map((post) => ({
+      ...post,
+      likeCount: post._count.likes,
+    }))
+
+    response.json(formattedPosts)
   } catch (error) {
     response.status(500).json({ message: 'Failed to fetch posts' })
+  }
+}
+
+const getMostLikedPosts = async (request, response) => {
+  try {
+    const posts = await prisma.post.findMany({
+      take: 6,
+      orderBy: {
+        likes: {
+          _count: 'desc',
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        content: true,
+        thumbnailImage: true,
+        thumbnailImageAltText: true,
+        createdAt: true,
+        likes: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    })
+
+    const result = posts.map((post) => ({
+      ...post,
+      likeCount: post.likes.length,
+    }))
+
+    response.json(result)
+  } catch (error) {
+    console.error('Error fetching most liked posts:', error)
+    response.status(500).json({ message: 'Failed to fetch most liked posts' })
   }
 }
 
@@ -44,16 +93,83 @@ const getPostById = async (request, response) => {
   }
 }
 
+const getAllPostsCategoryWise = async (request, response) => {
+  try {
+    const products = await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        posts: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            thumbnailImage: true,
+            thumbnailImageAltText: true,
+          },
+        },
+      },
+    })
+
+    return response.status(200).json(products)
+  } catch (error) {
+    console.log(error)
+    return response.status(500).json({ message: 'Failed to fetch posts' })
+  }
+}
+
+const getPostByCategory = async (request, response) => {
+  const { slug } = request.params
+
+  try {
+    if (!slug) {
+      return response
+        .status(404)
+        .json({ message: 'Category slug is not provided' })
+    }
+
+    const posts = await prisma.post.findMany({
+      where: {
+        categories: {
+          some: { slug: slug },
+        },
+      },
+      include: { categories: true },
+    })
+
+    if (posts.length === 0) {
+      return response
+        .status(404)
+        .json({ message: 'No posts found for this category' })
+    }
+
+    response.json(posts)
+  } catch (error) {
+    console.error('Error fetching posts by category:', error)
+    response.status(500).json({ message: 'Failed to fetch posts by category' })
+  }
+}
+
 const getPostBySlug = async (request, response) => {
   const { slug } = request.params
   try {
     const post = await prisma.post.findUnique({
-      where: { slug, status: 'ACTIVE' },
+      where: { slug },
       include: { categories: true },
     })
-    if (!post) return response.status(404).json({ message: 'Post not found' })
-    response.status(200).json(post)
+
+    if (!post || post.status !== 'ACTIVE') {
+      return response.status(404).json({ message: 'Post not found' })
+    }
+
+    const likeCount = await prisma.likes.count({
+      where: { postId: post.id },
+    })
+
+    response.status(200).json({ ...post, likeCount })
   } catch (error) {
+    console.error('Error fetching post:', error)
     response.status(500).json({ message: 'Failed to fetch post' })
   }
 }
@@ -198,6 +314,50 @@ const updatePost = async (request, response) => {
   }
 }
 
+const likePost = async (request, response) => {
+  const { token, postId } = request.body
+  const user = jwt.verify(token, process.env.JWT_SECRET)
+  console.log(user)
+  try {
+    if (!token) {
+      return response.status(400).json({ message: 'User data is required' })
+    }
+
+    if (!postId) {
+      return response.status(400).json({ message: 'Post data is required' })
+    }
+
+    if (!user) {
+      return response.status(400).json({ message: 'Invalid user data' })
+    }
+
+    const isExist = await prisma.likes.findFirst({
+      where: {
+        userId: user?.userId,
+        postId,
+      },
+    })
+
+    if (isExist) {
+      return response
+        .status(400)
+        .json({ message: 'You have already liked this post' })
+    }
+
+    await prisma.likes.create({
+      data: {
+        userId: user?.userId,
+        postId: postId,
+      },
+    })
+
+    return response.status(200).json({ message: 'You have liked the post' })
+  } catch (error) {
+    console.log(error)
+    response.status(500).json({ message: 'Something went wrong' })
+  }
+}
+
 const activePost = async (request, response) => {
   const { id } = request.params
   try {
@@ -259,11 +419,15 @@ const deletePost = async (request, response) => {
 
 module.exports = {
   getAllPosts,
+  getMostLikedPosts,
   getPostById,
+  getAllPostsCategoryWise,
+  getPostByCategory,
   getPostBySlug,
   getPostBySearchQuery,
   createPost,
   updatePost,
+  likePost,
   activePost,
   inactivePost,
   deletePost,

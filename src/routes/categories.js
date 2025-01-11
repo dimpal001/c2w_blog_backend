@@ -10,7 +10,7 @@ const authenticateJWT = require('../middleware/authentication')
 
 const router = express.Router()
 
-router.get('/', authenticateJWT, getAllCategories)
+router.get('/', getAllCategories)
 router.get('/:id', getCategoryById)
 router.post('/', authenticateJWT, createCategory)
 router.put('/', authenticateJWT, updateCategory)

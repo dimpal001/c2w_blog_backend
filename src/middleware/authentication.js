@@ -9,7 +9,6 @@ const authenticateJWT = (request, response, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    console.log(token)
 
     const currentTime = Math.floor(Date.now() / 1000)
     if (decoded.exp < currentTime) {
