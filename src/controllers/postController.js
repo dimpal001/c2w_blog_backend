@@ -316,13 +316,14 @@ const updatePost = async (request, response) => {
 
 const likePost = async (request, response) => {
   const { token, postId } = request.body
+
+  if (!token) {
+    return response.status(400).json({ message: 'Please login first' })
+  }
+
   const user = jwt.verify(token, process.env.JWT_SECRET)
   console.log(user)
   try {
-    if (!token) {
-      return response.status(400).json({ message: 'User data is required' })
-    }
-
     if (!postId) {
       return response.status(400).json({ message: 'Post data is required' })
     }
