@@ -120,7 +120,7 @@ const getAllPostsCategoryWise = async (request, response) => {
 }
 
 const getPostByCategory = async (request, response) => {
-  const { slug } = request.params
+  const { slug, page } = request.params
 
   try {
     if (!slug) {
@@ -129,6 +129,10 @@ const getPostByCategory = async (request, response) => {
         .json({ message: 'Category slug is not provided' })
     }
 
+    const currentPage = parseInt(page, 10) || 1
+    const pageSize = 10
+    const skip = (currentPage - 1) * pageSize
+
     const posts = await prisma.post.findMany({
       where: {
         categories: {
@@ -136,6 +140,16 @@ const getPostByCategory = async (request, response) => {
         },
       },
       include: { categories: true },
+      skip: skip,
+      take: pageSize,
+    })
+
+    const totalPosts = await prisma.post.count({
+      where: {
+        categories: {
+          some: { slug: slug },
+        },
+      },
     })
 
     if (posts.length === 0) {
@@ -144,7 +158,14 @@ const getPostByCategory = async (request, response) => {
         .json({ message: 'No posts found for this category' })
     }
 
-    response.json(posts)
+    response.json({
+      posts,
+      pagination: {
+        currentPage,
+        totalPages: Math.ceil(totalPosts / pageSize),
+        totalPosts,
+      },
+    })
   } catch (error) {
     console.error('Error fetching posts by category:', error)
     response.status(500).json({ message: 'Failed to fetch posts by category' })
