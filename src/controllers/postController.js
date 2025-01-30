@@ -107,6 +107,7 @@ const getAllPostsCategoryWise = async (request, response) => {
             slug: true,
             thumbnailImage: true,
             thumbnailImageAltText: true,
+            createdAt: true
           },
         },
       },
