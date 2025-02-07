@@ -121,6 +121,22 @@ const getAllPostsCategoryWise = async (request, response) => {
   }
 }
 
+const getLatestPosts = async (request, response) => {
+  try {
+    const posts = await prisma.post.findMany({
+      include: { categories: true },
+      take: 9,
+    })
+
+    response.json({
+      posts,
+    })
+  } catch (error) {
+    console.error('Error fetching posts by category:', error)
+    response.status(500).json({ message: 'Failed to fetch posts by category' })
+  }
+}
+
 const getPostByCategory = async (request, response) => {
   const { slug, page } = request.params
 
@@ -446,6 +462,7 @@ module.exports = {
   getMostLikedPosts,
   getPostById,
   getAllPostsCategoryWise,
+  getLatestPosts,
   getPostByCategory,
   getPostBySlug,
   getPostBySearchQuery,

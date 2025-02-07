@@ -12,6 +12,7 @@ const {
   inactivePost,
   deletePost,
   getPostBySlug,
+  getLatestPosts,
   getPostBySearchQuery,
 } = require('../controllers/postController')
 const authenticateJWT = require('../middleware/authentication')
@@ -22,6 +23,7 @@ router.get('/', getAllPosts)
 router.get('/get-most-liked', getMostLikedPosts)
 router.get('/:id', authenticateJWT, getPostById)
 router.get('/post/category-wise-post', getAllPostsCategoryWise)
+router.get('/latest/posts', getLatestPosts)
 router.get('/post-by-category/:slug/:page', getPostByCategory)
 router.get('/post/:slug', getPostBySlug)
 router.get('/query', getPostBySearchQuery)
