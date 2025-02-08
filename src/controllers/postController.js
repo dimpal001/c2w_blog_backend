@@ -58,6 +58,9 @@ const getMostLikedPosts = async (request, response) => {
             id: true,
           },
         },
+        categories: {
+          take: 1,
+        },
       },
     })
 
