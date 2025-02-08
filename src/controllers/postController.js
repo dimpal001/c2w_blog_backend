@@ -460,6 +460,17 @@ const deletePost = async (request, response) => {
   }
 }
 
+const getAllTags = async (request, response) => {
+  try {
+    const tagsData = await prisma.post.findMany({ select: { tags: true } })
+
+    const tags = tagsData.map((item) => item.tags).flat()
+    response.json({ tags })
+  } catch (error) {
+    response.status(500).json({ message: 'Failed to delete post' })
+  }
+}
+
 module.exports = {
   getAllPosts,
   getMostLikedPosts,
@@ -475,4 +486,5 @@ module.exports = {
   activePost,
   inactivePost,
   deletePost,
+  getAllTags,
 }

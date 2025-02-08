@@ -14,6 +14,7 @@ const {
   getPostBySlug,
   getLatestPosts,
   getPostBySearchQuery,
+  getAllTags,
 } = require('../controllers/postController')
 const authenticateJWT = require('../middleware/authentication')
 
@@ -33,5 +34,6 @@ router.put('/like-post', likePost)
 router.put('/active/:id', authenticateJWT, activePost)
 router.put('/inactive/:id', authenticateJWT, inactivePost)
 router.delete('/:id', authenticateJWT, deletePost)
+router.get('/get/tags', getAllTags)
 
 module.exports = router
