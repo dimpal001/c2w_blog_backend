@@ -39,9 +39,6 @@ const getAllPosts = async (request, response) => {
 const getMostLikedPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
-      where: {
-        status: 'ACTIVE',
-      },
       take: 6,
       orderBy: {
         likes: {
