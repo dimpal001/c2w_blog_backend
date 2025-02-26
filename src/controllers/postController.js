@@ -304,15 +304,13 @@ const createPost = async (request, response) => {
         .json({ message: 'At least one category is required for the post.' })
     }
 
-    const tagPromises = tags.map(async ({ name, hyperLink }) => {
-      return await prisma.tags.upsert({
-        where: { name },
-        update: {},
-        create: { name, hyperLink },
-      })
-    })
-
-    const tagRecords = await Promise.all(tagPromises)
+    const createdTags = await Promise.all(
+      tags.map(({ name, hyperLink }) =>
+        prisma.tags.create({
+          data: { name, hyperLink },
+        })
+      )
+    )
 
     const post = await prisma.post.create({
       data: {
@@ -323,7 +321,7 @@ const createPost = async (request, response) => {
         thumbnailImage,
         content,
         categories: { connect: categories.map((id) => ({ id })) },
-        tags: { connect: tagRecords.map((tag) => ({ id: tag.id })) },
+        tags: { connect: createdTags.map((tag) => ({ id: tag.id })) },
       },
     })
 
