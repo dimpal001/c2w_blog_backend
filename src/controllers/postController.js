@@ -81,7 +81,7 @@ const getPostById = async (request, response) => {
   try {
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { categories: true },
+      include: { categories: true, tags: true },
     })
     if (!post) return response.status(404).json({ message: 'Post not found' })
 
@@ -270,29 +270,29 @@ const createPost = async (request, response) => {
     })
 
     if (isExist) {
-      return response.status(400).json({ message: 'Title is already exist!' })
+      return response.status(400).json({ message: 'Title already exists!' })
     }
 
-    if (!title || title === '') {
+    if (!title?.trim()) {
       return response
         .status(400)
         .json({ message: 'Title is required and cannot be empty' })
     }
 
-    if (!userId || userId === '') {
+    if (!userId?.trim()) {
       return response.status(400).json({
         message:
           'User ID is required. Please log in again to ensure your session is active',
       })
     }
 
-    if (!thumbnailImage || thumbnailImage === '') {
+    if (!thumbnailImage?.trim()) {
       return response
         .status(400)
         .json({ message: 'Thumbnail image is required.' })
     }
 
-    if (!content || content === '') {
+    if (!content?.trim()) {
       return response
         .status(400)
         .json({ message: 'Blog content cannot be empty' })
@@ -304,6 +304,16 @@ const createPost = async (request, response) => {
         .json({ message: 'At least one category is required for the post.' })
     }
 
+    const tagPromises = tags.map(async ({ name, hyperLink }) => {
+      return await prisma.tags.upsert({
+        where: { name },
+        update: {},
+        create: { name, hyperLink },
+      })
+    })
+
+    const tagRecords = await Promise.all(tagPromises)
+
     const post = await prisma.post.create({
       data: {
         title,
@@ -312,13 +322,14 @@ const createPost = async (request, response) => {
         status: 'PENDING',
         thumbnailImage,
         content,
-        tags,
         categories: { connect: categories.map((id) => ({ id })) },
+        tags: { connect: tagRecords.map((tag) => ({ id: tag.id })) },
       },
     })
+
     response.status(201).json(post)
   } catch (error) {
-    console.log(error)
+    console.error(error)
     response.status(500).json({ message: 'Failed to create post' })
   }
 }
@@ -334,8 +345,37 @@ const updatePost = async (request, response) => {
     tags,
     categories,
   } = request.body
+
   try {
     const slug = slugify(title, { lower: true, strict: true })
+
+    const existingTags = await prisma.tags.findMany({
+      where: {
+        OR: tags.map(({ name, hyperLink }) => ({ name, hyperLink })),
+      },
+    })
+
+    const existingTagIds = existingTags.map((tag) => tag.id)
+
+    const newTags = tags.filter(
+      ({ name, hyperLink }) =>
+        !existingTags.some(
+          (tag) => tag.name === name && tag.hyperLink === hyperLink
+        )
+    )
+
+    const createdTags = await Promise.all(
+      newTags.map(({ name, hyperLink }) =>
+        prisma.tags.create({
+          data: { name, hyperLink },
+        })
+      )
+    )
+
+    const allTagIds = [...existingTagIds, ...createdTags.map((tag) => tag.id)]
+
+    console.log(allTagIds)
+
     const post = await prisma.post.update({
       where: { id },
       data: {
@@ -345,13 +385,18 @@ const updatePost = async (request, response) => {
         status,
         thumbnailImage,
         content,
-        tags,
-        categories: { set: categories.map((id) => ({ id })) },
+        categories: {
+          set: categories.map((id) => ({ id })),
+        },
+        tags: {
+          set: allTagIds.map((id) => ({ id })),
+        },
       },
     })
+
     response.json(post)
   } catch (error) {
-    console.log(error)
+    console.error(error)
     response.status(500).json({ message: 'Failed to update post' })
   }
 }

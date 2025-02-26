@@ -40,11 +40,18 @@ model Post {
   thumbnailImage        String
   thumbnailImageAltText String?
   content               String     @map("blog_post_full_content") @db.Text
-  tags                  Json       @map("blog_post_seo_tags")
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
   categories            Category[] @relation("CategoryPosts")
   likes                 Likes[]
+  tags                  Tags[]     @relation("PostTag")
+}
+
+model Tags {
+  id        String @id @unique @default(cuid()) @map("blog_tag_unique_id")
+  name      String
+  hyperLink String
+  posts     Post[] @relation("PostTag")
 }
 
 model Images {
