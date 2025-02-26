@@ -40,7 +40,7 @@ const getMostLikedPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
       where: {
-        NOT: { status: 'ACTIVE' },
+        status: 'ACTIVE',
       },
       take: 6,
       orderBy: {
@@ -103,7 +103,7 @@ const getAllPostsCategoryWise = async (request, response) => {
   try {
     const products = await prisma.category.findMany({
       where: {
-        NOT: { status: 'ACTIVE' },
+        status: 'ACTIVE',
       },
       select: {
         id: true,
@@ -134,7 +134,7 @@ const getLatestPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
       where: {
-        NOT: { status: 'ACTIVE' },
+        status: 'ACTIVE',
       },
       include: { categories: true },
       take: 9,
@@ -165,9 +165,7 @@ const getPostByCategory = async (request, response) => {
 
     const posts = await prisma.post.findMany({
       where: {
-        NOT: {
-          status: 'ACTIVE',
-        },
+        status: 'ACTIVE',
         categories: {
           some: { slug: slug },
         },
