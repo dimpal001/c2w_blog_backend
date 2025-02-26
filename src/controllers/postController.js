@@ -99,9 +99,6 @@ const getPostById = async (request, response) => {
 const getAllPostsCategoryWise = async (request, response) => {
   try {
     const products = await prisma.category.findMany({
-      where: {
-        status: 'ACTIVE',
-      },
       select: {
         id: true,
         name: true,
@@ -130,9 +127,6 @@ const getAllPostsCategoryWise = async (request, response) => {
 const getLatestPosts = async (request, response) => {
   try {
     const posts = await prisma.post.findMany({
-      where: {
-        status: 'ACTIVE',
-      },
       include: { categories: true },
       take: 9,
     })
@@ -162,7 +156,6 @@ const getPostByCategory = async (request, response) => {
 
     const posts = await prisma.post.findMany({
       where: {
-        status: 'ACTIVE',
         categories: {
           some: { slug: slug },
         },
