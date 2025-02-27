@@ -4,8 +4,18 @@ const { default: slugify } = require('slugify')
 const prisma = new PrismaClient()
 
 const getAllPosts = async (request, response) => {
+  const { page = 0, searchQuery } = request.query
   try {
+    const searchFilter = searchQuery
+      ? {
+          title: {
+            contains: searchQuery,
+          },
+        }
+      : {}
+
     const posts = await prisma.post.findMany({
+      where: searchFilter,
       select: {
         id: true,
         title: true,
@@ -23,6 +33,8 @@ const getAllPosts = async (request, response) => {
       orderBy: {
         createdAt: 'desc',
       },
+      take: 9,
+      skip: page * 9,
     })
 
     const formattedPosts = posts.map((post) => ({
@@ -30,7 +42,9 @@ const getAllPosts = async (request, response) => {
       likeCount: post._count.likes,
     }))
 
-    response.json(formattedPosts)
+    const totalPosts = await prisma.post.count()
+
+    response.json({ posts: formattedPosts, totalPosts })
   } catch (error) {
     response.status(500).json({ message: 'Failed to fetch posts' })
   }

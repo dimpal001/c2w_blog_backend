@@ -3,11 +3,24 @@ const slugify = require('slugify')
 const prisma = new PrismaClient()
 
 const getAllImages = async (request, response) => {
+  const { page = 0, searchQuery } = request.query
+
   try {
+    const searchFilter = searchQuery
+      ? {
+          note: {
+            contains: searchQuery,
+          },
+        }
+      : {}
+
     const images = await prisma.images.findMany({
+      where: searchFilter,
       orderBy: {
         createdAt: 'desc',
       },
+      take: 16,
+      skip: page * 16,
     })
 
     const imagesWithUsage = await Promise.all(
@@ -27,7 +40,9 @@ const getAllImages = async (request, response) => {
       })
     )
 
-    return response.json({ images: imagesWithUsage })
+    const totalImages = await prisma.images.count()
+
+    return response.json({ images: imagesWithUsage, totalImages })
   } catch (error) {
     console.error('Error fetching images:', error)
     return response.status(500).json({ error: 'Failed to fetch images' })
