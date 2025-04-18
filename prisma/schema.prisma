@@ -37,6 +37,7 @@ model Post {
   title                 String     @map("blog_post_title")
   userId                String     @map("blog_post_user_id")
   slug                  String     @unique @map("blog_post_unique_slug")
+  ogImage               String?    @map("blog_post_og_image_url")
   status                Status     @map("blog_post_status")
   thumbnailImage        String
   thumbnailImageAltText String?

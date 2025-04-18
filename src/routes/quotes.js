@@ -9,9 +9,9 @@ const authenticateJWT = require('../middleware/authentication')
 
 const router = express.Router()
 
-router.get('/', getAllQuotes)
-router.post('/add-quote', addQuote)
-router.patch('/update-quote', updateQuote)
-router.delete('/delete-quote', deleteQuote)
+router.get('/', authenticateJWT, getAllQuotes)
+router.post('/add-quote', authenticateJWT, addQuote)
+router.patch('/update-quote', authenticateJWT, updateQuote)
+router.delete('/delete-quote', authenticateJWT, deleteQuote)
 
 module.exports = router

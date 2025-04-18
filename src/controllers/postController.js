@@ -331,6 +331,9 @@ const createPost = async (request, response) => {
         title,
         userId,
         slug,
+        ogImage:
+          'https://clothes2wear.blr1.cdn.digitaloceanspaces.com/images/' +
+          thumbnailImage,
         status: 'PENDING',
         thumbnailImage,
         content,
